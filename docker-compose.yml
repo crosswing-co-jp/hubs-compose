@@ -22,7 +22,7 @@ services:
       INTERACTIVE: "false"
       MEDIASOUP_MIN_PORT: 40000
       MEDIASOUP_MAX_PORT: 40050
-      MEDIASOUP_ANNOUNCED_IP: ${PRIVATE_NETWORK_IP}
+      MEDIASOUP_ANNOUNCED_IP: 13.159.32.47
     ports:
       - "4443:4443"
       # This should be the same as MEDIASOUP_MIN_PORT and MEDIASOUP_MAX_PORT
@@ -32,6 +32,8 @@ services:
       - "40000-40050:40000-40050/udp"
     volumes:
       - dialog:/code
+      - /etc/ssl/ichifan-dialog/fullchain.pem:/etc/ssl/fullchain.pem:ro
+      - /etc/ssl/ichifan-dialog/privkey.pem:/etc/ssl/privkey.pem:ro
     working_dir: /code
   hubs-admin:
     build:
@@ -97,17 +99,27 @@ services:
     environment:
       DB_CREDENTIALS: postgres
       DB_HOST: db
-      DIALOG_HOSTNAME: "hubs.local"
+      DIALOG_HOSTNAME: "ichifan.meta-box.space"
       DIALOG_PORT: 4443
       HUBS_ADMIN_INTERNAL_HOSTNAME: hubs-admin
-      HUBS_CLIENT_INTERNAL_HOSTNAME: hubs-client
+      HUBS_CLIENT_INTERNAL_HOSTNAME: ichifan.meta-box.space
       POSTGREST_INTERNAL_HOSTNAME: postgrest
       SPOKE_INTERNAL_HOSTNAME: spoke
+    extra_hosts:
+      - "hubs.voice-doujin.space:13.159.32.47"
     ports:
       - "4000:4000"
     volumes:
       - reticulum:/code
       - retstorage:/code/storage/dev
+  imgproxy:
+    image: darthsim/imgproxy:v3
+    environment:
+      IMGPROXY_BIND: ":8080"
+      IMGPROXY_ALLOW_LOOPBACK_SOURCE_ADDRESSES: "true"
+      IMGPROXY_LOG_LEVEL: info
+      IMGPROXY_CONCURRENCY: 4
+      IMGPROXY_DEVELOPMENT_ERRORS_MODE: "true"
   spoke:
     build:
       context: .
